@@ -1,0 +1,14 @@
+#!/bin/bash
+
+text="c'est un texte de merde"
+
+for i in {1..5}; do
+    if [ -d "dir_$i" ]; then
+        rm -r "dir_$i"
+    fi
+    mkdir "dir_$i"
+    for j in {1..5}; do
+        touch "dir_$i/file_$j"
+        echo $text > "dir_$i/file_$j"
+    done
+done
