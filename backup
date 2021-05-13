@@ -5,21 +5,55 @@ pass=""
 encrypt=0
 backup_folders=""
 backup_dest="."
+log=0
+logFile=""
 
+#echo_deb <msg>
+function echo_log() {
+    if [ "A$1" != "A" ] && [ "A$logFile" != "A" ]; then
+        local date=$(date "+%Y-%m-%d %H:%M:%S")
+        echo -e "$date : $1" >> $logFile
+    fi
+}
+
+#echo_err <msg>
 function echo_err() {
     if [ "A$1" != "A" ]; then
-        echo -e "\e[31mERROR :\e[0m $1" > /dev/stderr
+        if [ $log -eq 1 ]; then
+            echo_log "$1"
+        else
+            echo -e "\e[31mERROR :\e[0m $1" >> /dev/stderr
+        fi
+    fi
+}
+
+#echo_out <msg>
+function echo_out() {
+    if [ "A$1" != "A" ]; then
+        if [ $log -eq 1 ]; then
+            echo_log "$1" 
+        else
+            echo -e "$1"
+        fi
     fi
 }
 
 function helpFunc() {
-    echo $"Usage : $0 [option]
+    echo_out $"Usage : $0 [option]
 
 Option :
 -h or --help ........................... Show help
 -f \"<dir1> [dirN]\" ..................... Source folder
 -o <outputDir> ......................... Destination folder
--p <pass> .............................. Pass phrase"
+-p <pass> .............................. Pass phrase
+-c <config> ............................ File which contain source folders name
+-l <logFile> ........................... Log file
+
+Example :
+backup -f \"dir_1 dir_2 dir_3\" -o dest_folder
+backup -c config.txt -o dest_folder
+backup -f \"dir_1 dir_2 dir_3\" -o dest_folder -l logfile.log
+backup -f \"dir_1 dir_2 dir_3\" -o dest_folder -p passphrase"
 
     exit 0
 }
@@ -27,7 +61,7 @@ Option :
 function verification() {
     if [ "A$backup_folders" != "A" ]; then
         for file in $backup_folders; do
-            if [ ! -d $file ]; then
+            if [ ! -d $file ] && [ ! -f $file ]; then
                 echo_err $"Source \"$file\" folder does not exist"
                 exit 1
             fi
@@ -51,16 +85,31 @@ function verification() {
         echo_err $"Passphrase is missing"
         exit 1
     fi
+
+    if [ $log -eq 1 ] && [ "A$logFile" = "A" ]; then
+        log=0
+        echo_err $"Log file is missing"
+        exit 1
+    fi
+}
+
+# readConfig <config>
+function readConfig() {
+    if [ "A$1" != "A" ]; then
+        while read line; do
+            backup_folders="$backup_folders $line"
+        done < $1
+    fi
 }
 
 function encryptFile() {
-    echo $"Encryption of $backup_dest/$archive_name"
+    echo_out $"Encryption of $backup_dest/$archive_name"
     if ! gpg --batch --passphrase $pass -c $backup_dest/$archive_name; then
         echo_err $"Something wrong with encrytion"
         exit 1
     fi
     rm $backup_dest/$archive_name
-    echo $"Encryption end"
+    echo_out $"Encryption $backup_dest/$archive_name.gpg end"
 }
 
 function compressFile() {
@@ -68,12 +117,12 @@ function compressFile() {
     hostname=$(hostname -s)
     archive_name="backup_${hostname}_${date}.tar.gz"
 
-    echo $"Compress of $backup_folders to $backup_dest/$archive_name"
+    echo_out $"Compress of $backup_folders to $backup_dest/$archive_name"
     if ! tar czfv $backup_dest/$archive_name $backup_folders; then
         echo_err $"Something wrong with compression"
         exit 1
     fi
-    echo $"Backup $backup_dest/$archive_name end"
+    echo_out $"Backup $backup_dest/$archive_name end"
 }
 
 if [ $# -ge 1 ]; then
@@ -86,12 +135,19 @@ if [ $# -ge 1 ]; then
         elif [ "$1" == "-o" ]; then
             shift
             backup_dest=$1
+        elif [ "$1" == "-c" ]; then
+            shift
+            readConfig $1
+        elif [ "$1" == "-l" ]; then
+            shift
+            log=1
+            logFile=$1
         elif [ "$1" == "-p" ]; then
             shift
             encrypt=1
             pass=$1
         # else
-        #     echo "Unknown parameter : $1"
+        #     echo $"Unknown parameter : $1"
         #     exit 1
         fi
         shift

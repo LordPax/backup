@@ -1,4 +1,5 @@
 #!/bin/bash
+# script pour tester le script de backup
 
 text="c'est un texte de merde"
 
