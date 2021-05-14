@@ -1,6 +1,9 @@
 #!/bin/bash
 # backup v2.0
 
+# export TEXTDOMAINDIR="./locale/"
+export TEXTDOMAIN="backup"
+
 pass=""
 encrypt=0
 backup_folders=""
@@ -113,12 +116,13 @@ function encryptFile() {
 }
 
 function compressFile() {
-    date=$(date +%Y-%m-%d)
-    hostname=$(hostname -s)
+    local date=$(date +%Y-%m-%d)
+    local hostname=$(hostname -s)
     archive_name="backup_${hostname}_${date}.tar.gz"
+    local out=$([ $log -eq 1 ] && echo /dev/null || echo /dev/stdout)
 
     echo_out $"Compress of $backup_folders to $backup_dest/$archive_name"
-    if ! tar czfv $backup_dest/$archive_name $backup_folders; then
+    if ! tar czfv $backup_dest/$archive_name $backup_folders &> $out; then
         echo_err $"Something wrong with compression"
         exit 1
     fi
