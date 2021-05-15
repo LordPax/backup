@@ -6,6 +6,7 @@ export TEXTDOMAIN="backup"
 
 pass=""
 encrypt=0
+tmp_folders=""
 backup_folders=""
 backup_dest="."
 log=0
@@ -25,7 +26,7 @@ function echo_err() {
         if [ $log -eq 1 ]; then
             echo_log "$1"
         else
-            echo -e "\e[31mERROR :\e[0m $1" >> /dev/stderr
+            echo -e "\e[31mERROR :\e[0m $1" > /dev/stderr
         fi
     fi
 }
@@ -62,11 +63,12 @@ backup -f \"dir_1 dir_2 dir_3\" -o dest_folder -p passphrase"
 }
 
 function verification() {
-    if [ "A$backup_folders" != "A" ]; then
-        for file in $backup_folders; do
-            if [ ! -d $file ] && [ ! -f $file ]; then
+    if [ "A$tmp_folders" != "A" ]; then
+        for file in $tmp_folders; do
+            if [ -d $file ] || [ -f $file ]; then
+                backup_folders="$backup_folders $file"
+            else
                 echo_err $"Source \"$file\" folder does not exist"
-                exit 1
             fi
         done
     else
@@ -74,7 +76,7 @@ function verification() {
         exit 1
     fi
 
-    if [ "A$backup_folders" != "A" ]; then
+    if [ "A$backup_dest" != "A" ]; then
         if [ ! -d $backup_dest ]; then
             echo_err $"Destination \"$backup_dest\" folder does not exist"
             exit 1
@@ -100,7 +102,7 @@ function verification() {
 function readConfig() {
     if [ "A$1" != "A" ]; then
         while read line; do
-            backup_folders="$backup_folders $line"
+            tmp_folders="$tmp_folders $line"
         done < $1
     fi
 }
@@ -135,7 +137,7 @@ if [ $# -ge 1 ]; then
             helpFunc
         elif [ "$1" == "-f" ]; then
             shift
-            backup_folders=$1
+            tmp_folders=$1
         elif [ "$1" == "-o" ]; then
             shift
             backup_dest=$1
