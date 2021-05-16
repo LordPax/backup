@@ -24,7 +24,7 @@ function echo_log() {
 function echo_err() {
     if [ "A$1" != "A" ]; then
         if [ $log -eq 1 ]; then
-            echo_log "$1"
+            echo_log "ERROR : $1"
         else
             echo -e "\e[31mERROR :\e[0m $1" > /dev/stderr
         fi
