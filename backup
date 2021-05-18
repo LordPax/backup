@@ -1,7 +1,8 @@
 #!/bin/bash
-# backup v2.0
+# author : lordpax
+# backup v2.1
+# Petit script de backup
 
-# export TEXTDOMAINDIR="./locale/"
 export TEXTDOMAIN="backup"
 
 pass=""
@@ -11,6 +12,7 @@ backup_folders=""
 backup_dest="."
 log=0
 logFile=""
+version="v2.1"
 
 #echo_deb <msg>
 function echo_log() {
@@ -47,6 +49,7 @@ function helpFunc() {
 
 Option :
 -h or --help ........................... Show help
+-v or --version ........................ Show version
 -f \"<dir1> [dirN]\" ..................... Source folder
 -o <outputDir> ......................... Destination folder
 -p <pass> .............................. Pass phrase
@@ -135,6 +138,9 @@ if [ $# -ge 1 ]; then
     for i in $(seq 1 $#); do
         if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then 
             helpFunc
+        elif [ "$1" == "--version" ] || [ "$1" == "-v" ]; then 
+            echo_out $version
+            exit 0
         elif [ "$1" == "-f" ]; then
             shift
             tmp_folders=$1
@@ -152,9 +158,6 @@ if [ $# -ge 1 ]; then
             shift
             encrypt=1
             pass=$1
-        # else
-        #     echo $"Unknown parameter : $1"
-        #     exit 1
         fi
         shift
     done

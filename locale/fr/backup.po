@@ -5,22 +5,24 @@ msgstr ""
 "PO-Revision-Date: \n"
 "Last-Translator: \n"
 "Language-Team: \n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Language: fr\n"
 "X-Generator: Poedit 2.4.1\n"
 
-#: ../../backup:42
+#: backup:47
 msgid ""
 "Usage : $0 [option]\n"
 "\n"
 "Option :\n"
 "-h or --help ........................... Show help\n"
+"-v or --version ........................ Show version\n"
 "-f \\\"<dir1> [dirN]\\\" ..................... Source folder\n"
 "-o <outputDir> ......................... Destination folder\n"
 "-p <pass> .............................. Pass phrase\n"
-"-c <config> ............................ File which contain source folders name\n"
+"-c <config> ............................ File which contain source folders "
+"name\n"
 "-l <logFile> ........................... Log file\n"
 "\n"
 "Example :\n"
@@ -33,10 +35,12 @@ msgstr ""
 "\n"
 "Option :\n"
 "-h or --help ........................... Affiche l'aide\n"
+"-v or --version ........................ Affiche la version\n"
 "-f \\\"<dir1> [dirN]\\\" ..................... Dossier source\n"
 "-o <outputDir> ......................... Dossier destination\n"
 "-p <pass> .............................. Pass phrase\n"
-"-c <config> ............................ Fichier qui contien les dossiers sources\n"
+"-c <config> ............................ Fichier qui contien les dossiers "
+"sources\n"
 "-l <logFile> ........................... Fichier de log\n"
 "\n"
 "Exemple :\n"
@@ -45,50 +49,50 @@ msgstr ""
 "backup -f \\\"dir_1 dir_2 dir_3\\\" -o dest_folder -l logfile.log\n"
 "backup -f \\\"dir_1 dir_2 dir_3\\\" -o dest_folder -p passphrase"
 
-#: ../../backup:65
+#: backup:73
 msgid "Source \\\"$file\\\" folder does not exist"
 msgstr "Dossier source \\\"$file\\\" n'existe pas"
 
-#: ../../backup:70
+#: backup:77
 msgid "Source folder is missing"
 msgstr "Dossier source manquant"
 
-#: ../../backup:76
+#: backup:83
 msgid "Destination \\\"$backup_dest\\\" folder does not exist"
 msgstr "Dossier destination \\\"$backup_dest\\\" n'existe pas"
 
-#: ../../backup:80
+#: backup:87
 msgid "Destination folder is missing"
 msgstr "Dossier destination manquant"
 
-#: ../../backup:85
+#: backup:92
 msgid "Passphrase is missing"
 msgstr "Passphrase manqante"
 
-#: ../../backup:91
+#: backup:98
 msgid "Log file is missing"
 msgstr "Fichier log manquant"
 
-#: ../../backup:106
+#: backup:113
 msgid "Encryption of $backup_dest/$archive_name"
 msgstr "Chiffrement de $backup_dest/$archive_name"
 
-#: ../../backup:108
+#: backup:115
 msgid "Something wrong with encrytion"
 msgstr "Quelque chose c'est mal passer avec le chiffrement"
 
-#: ../../backup:112
+#: backup:119
 msgid "Encryption $backup_dest/$archive_name.gpg end"
 msgstr "Chiffrement de $backup_dest/$archive_name fini"
 
-#: ../../backup:120
+#: backup:128
 msgid "Compress of $backup_folders to $backup_dest/$archive_name"
 msgstr "Compression de $backup_folders to $backup_dest/$archive_name"
 
-#: ../../backup:122
+#: backup:130
 msgid "Something wrong with compression"
 msgstr "Quelque chose c'est mal passer avec la compression"
 
-#: ../../backup:125
+#: backup:133
 msgid "Backup $backup_dest/$archive_name end"
 msgstr "Backup $backup_dest/$archive_name fini"
