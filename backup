@@ -126,7 +126,11 @@ function compressFile() {
     archive_name="backup_${hostname}_${date}.tar.gz"
     local out=$([ $log -eq 1 ] && echo /dev/null || echo /dev/stdout)
 
-    echo_out $"Compress of $backup_folders to $backup_dest/$archive_name"
+    echo_out $"Compress of :"
+    for file in $backup_folders; do
+        echo_out "  -> $file"
+    done
+        
     if ! tar czfv $backup_dest/$archive_name $backup_folders &> $out; then
         echo_err $"Something wrong with compression"
         exit 1
