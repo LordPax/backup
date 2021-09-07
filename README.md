@@ -13,6 +13,7 @@ Option :
 -p <pass> .............................. Pass phrase
 -c <config> ............................ File which contain source folders name
 -l <logFile> ........................... Log file
+-n <name> .............................. Name of output archive (automatically add .tar.gz)
 
 Example :
 backup -f "dir_1 dir_2 dir_3" -o dest_folder
