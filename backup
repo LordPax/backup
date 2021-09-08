@@ -12,8 +12,9 @@ backup_folders=""
 backup_dest="."
 log=0
 logFile=""
-version="v2.1"
+version="v2.2"
 archive_name=""
+verbose=0
 
 # echo_deb <msg>
 function echo_log() {
@@ -51,6 +52,7 @@ function helpFunc() {
 Option :
 -h or --help ........................... Show help
 -v or --version ........................ Show version
+-V or --verbose ........................ Verbose mode
 -f \"<dir1> [dirN]\" ..................... Source folder
 -o <outputDir> ......................... Destination folder
 -p <pass> .............................. Pass phrase
@@ -125,7 +127,7 @@ function encryptFile() {
 function compressFile() {
     local date=$(date +%Y-%m-%d)
     local hostname=$(hostname -s)
-    local out=$([ $log -eq 1 ] && echo /dev/null || echo /dev/stdout)
+    local out=$(([ $log -eq 1 ] || [ $verbose -eq 0 ]) && echo /dev/null || echo /dev/stdout)
     
     if [ "A$archive_name" != "A" ]; then
         archive_name="${archive_name}_${date}.tar.gz"
@@ -139,6 +141,8 @@ function compressFile() {
     for file in $backup_folders; do
         echo_out "  -> $file"
     done
+
+    echo_out $"Backup $backup_dest/$archive_name in progress ..."
         
     if ! tar czfv $backup_dest/$archive_name $backup_folders &> $out; then
         echo_err $"Something wrong with compression"
@@ -182,6 +186,8 @@ if [ $# -ge 1 ]; then
     for i in $(seq 1 $#); do
         if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then 
             helpFunc
+        elif [ "$1" == "--verbose" ] || [ "$1" == "-V" ]; then 
+            verbose=1
         elif [ "$1" == "--version" ] || [ "$1" == "-v" ]; then 
             echo_out $version
             exit 0
