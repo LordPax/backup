@@ -12,7 +12,7 @@ backup_folders=""
 backup_dest="."
 log=0
 logFile=""
-version="v2.1"
+version="v2.2"
 archive_name=""
 verbose=0
 
@@ -142,7 +142,7 @@ function compressFile() {
         echo_out "  -> $file"
     done
 
-    echo_out $"Backup $backup_dest/$archive_name in progress"
+    echo_out $"Backup $backup_dest/$archive_name in progress ..."
         
     if ! tar czfv $backup_dest/$archive_name $backup_folders &> $out; then
         echo_err $"Something wrong with compression"
