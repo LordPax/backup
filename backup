@@ -15,7 +15,7 @@ logFile=""
 version="v2.1"
 archive_name=""
 
-#echo_deb <msg>
+# echo_deb <msg>
 function echo_log() {
     if [ "A$1" != "A" ] && [ "A$logFile" != "A" ]; then
         local date=$(date "+%Y-%m-%d %H:%M:%S")
@@ -23,7 +23,7 @@ function echo_log() {
     fi
 }
 
-#echo_err <msg>
+# echo_err <msg>
 function echo_err() {
     if [ "A$1" != "A" ]; then
         if [ $log -eq 1 ]; then
@@ -34,7 +34,7 @@ function echo_err() {
     fi
 }
 
-#echo_out <msg>
+# echo_out <msg>
 function echo_out() {
     if [ "A$1" != "A" ]; then
         if [ $log -eq 1 ]; then
@@ -147,6 +147,37 @@ function compressFile() {
     echo_out $"Backup $backup_dest/$archive_name end"
 }
 
+# filter <nb>
+function filter() {
+    local file=$(cat /dev/stdin)
+    local declare tabFile
+    local declare data
+    local i=0
+    local date_file=""
+
+    for elem in $file; do
+        date_file=$(echo $elem | grep -Eo "[0-9]{4}\-[0-9]{2}\-[0-9]{2}")
+        data=(
+            $(echo $date_file | cut -d '-' -f 1)
+            $(echo $date_file | cut -d '-' -f 2)
+            $(echo $date_file | cut -d '-' -f 3)
+        )
+        echo ${data[0]}
+        tabFile[$i]=$elem
+        i=$(( i+1 ))
+    done
+}
+
+# delete <nbToSave>
+# conserve les nbToSave les plus récentes et supprime les autres
+function delete() {
+    local date=$(date +%Y-%m-%d)
+    local hostname=$(hostname -s)
+    local name=$([ "A$archive_name" != "A" ] && echo "$archive_name" || echo "backup_${hostname}")
+    local file=$(ls $backup_dest | grep "$name" | filter)
+    echo $file
+}
+
 if [ $# -ge 1 ]; then
     for i in $(seq 1 $#); do
         if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then 
@@ -182,3 +213,4 @@ fi
 verification
 compressFile
 [ $encrypt -eq 1 ] && encryptFile
+# delete
