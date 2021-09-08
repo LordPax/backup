@@ -141,6 +141,8 @@ function compressFile() {
     for file in $backup_folders; do
         echo_out "  -> $file"
     done
+
+    echo_out $"Backup $backup_dest/$archive_name in progress"
         
     if ! tar czfv $backup_dest/$archive_name $backup_folders &> $out; then
         echo_err $"Something wrong with compression"
