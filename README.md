@@ -11,9 +11,10 @@ Option :
 -v or --version ........................ Show version
 -V or --verbose ........................ Verbose mode
 -f \"<dir1> [dirN]\" ..................... Source folder
+-c <config> ............................ File which contain source folders name
+-r <backupDir> ......................... Restore backup from backupDir to outputDir
 -o <outputDir> ......................... Destination folder
 -p <pass> .............................. Pass phrase
--c <config> ............................ File which contain source folders name
 -l <logFile> ........................... Log file
 -n <name> .............................. Name of output archive (automatically add .tar.gz)
 -s <nbToSave> .......................... Save nbToSave backup and delete other

@@ -1,6 +1,6 @@
 #!/bin/bash
 # author : lordpax
-# backup v2.1
+# backup v3.0
 # Petit script de backup
 
 export TEXTDOMAIN="backup"
@@ -12,10 +12,11 @@ backup_folders=""
 backup_dest="."
 log=0
 logFile=""
-version="v2.2"
+version="v3.0"
 archive_name=""
 verbose=0
 nbToSave=0
+restore=0
 
 # echo_deb <msg>
 function echo_log() {
@@ -55,9 +56,10 @@ Option :
 -v or --version ........................ Show version
 -V or --verbose ........................ Verbose mode
 -f \"<dir1> [dirN]\" ..................... Source folder
+-c <config> ............................ File which contain source folders name
+-r <backupDir> ......................... Restore backup from backupDir to outputDir
 -o <outputDir> ......................... Destination folder
 -p <pass> .............................. Pass phrase
--c <config> ............................ File which contain source folders name
 -l <logFile> ........................... Log file
 -n <name> .............................. Name of output archive (automatically add .tar.gz)
 -s <nbToSave> .......................... Save nbToSave backup and delete other
@@ -131,13 +133,6 @@ function compressFile() {
     local hostname=$(hostname -s)
     local out=$(([ $log -eq 1 ] || [ $verbose -eq 0 ]) && echo /dev/null || echo /dev/stdout)
     
-    # if [ "A$archive_name" != "A" ]; then
-    #     archive_name="${archive_name}_${date}.tar.gz"
-    # else
-    #     archive_name="backup_${hostname}_${date}.tar.gz"
-    # fi
-
-    # archive_name=$([ "A$archive_name" != "A" ] && echo "${archive_name}.tar.gz" || echo "backup_${hostname}_${date}.tar.gz")
     local name=$([ "A$archive_name" != "A" ] && echo "${archive_name}.${date}.tar.gz" || echo "backup_${hostname}.${date}.tar.gz")
 
     echo_out $"Compress of :"
@@ -146,7 +141,6 @@ function compressFile() {
     done
 
     echo_out $"Backup $backup_dest/$name in progress ..."
-        
     if ! tar czfv $backup_dest/$name $backup_folders &> $out; then
         echo_err $"Something wrong with compression"
         exit 1
@@ -178,6 +172,24 @@ function delete() {
     fi
 }
 
+# restoreFile 
+function restoreFile() {
+    local name=$([ "A$archive_name" != "A" ] && echo "$archive_name" || echo "backup_${hostname}")
+    local archive_date=$(ls $backup_folders | grep $name | cut -d '.' -f 2 | sort -r | head -1)
+    local out=$(([ $log -eq 1 ] || [ $verbose -eq 0 ]) && echo /dev/null || echo /dev/stdout)
+
+    if [ "A$archive_date" == "A" ]; then
+        echo_err $"No backup found"
+        exit 1
+    fi
+    
+    echo_out $"Restoration of $backup_folders/${name}.${archive_date}.tar.gz to $backup_dest"
+    if ! tar xfz $backup_folders/${name}.${archive_date}.tar.gz -C $backup_dest &> $out; then
+        echo_err $"Something wrong with restoration"
+        exit 1
+    fi
+}
+
 if [ $# -ge 1 ]; then
     for i in $(seq 1 $#); do
         if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then 
@@ -189,6 +201,10 @@ if [ $# -ge 1 ]; then
             exit 0
         elif [ "$1" == "-f" ]; then
             shift
+            tmp_folders=$1
+        elif [ "$1" == "-r" ]; then
+            shift
+            restore=1
             tmp_folders=$1
         elif [ "$1" == "-o" ]; then
             shift
@@ -216,6 +232,6 @@ if [ $# -ge 1 ]; then
 fi
 
 verification
-compressFile
+[ $restore -eq 0 ] && compressFile || restoreFile
 [ $encrypt -eq 1 ] && encryptFile
 [ $nbToSave -gt 0 ] && delete $nbToSave
