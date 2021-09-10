@@ -2,14 +2,15 @@
 # script qui génère des fichiers pour tester le script de backup
 
 text="c'est un texte de merde"
+dir=test_backup
+
+[ ! -d $dir ] && mkdir $dir
 
 for i in {1..5}; do
-    if [ -d "dir_$i" ]; then
-        rm -r "dir_$i"
-    fi
-    mkdir "dir_$i"
+    [ -d "$dir/dir_$i" ] && rm -r "$dir/dir_$i"
+    mkdir "$dir/dir_$i"
     for j in {1..5}; do
-        touch "dir_$i/file_$j"
-        echo $text > "dir_$i/file_$j"
+        touch "$dir/dir_$i/file_$j"
+        echo $text > "$dir/dir_$i/file_$j"
     done
 done
