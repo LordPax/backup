@@ -58,8 +58,10 @@ Option :
 -f \"<dir1> [dirN]\" ..................... Source folder
 -c <config> ............................ File which contain source folders name
 -r <backupDir> ......................... Restore backup from backupDir to outputDir
+-g <config> <branch> ................... Push file into a git repo (soon)
 -o <outputDir> ......................... Destination folder
--p <pass> .............................. Pass phrase
+-p <pass> .............................. Pass phrase encrypt
+-d <pass> .............................. Pass phrase decrypt (soon)
 -l <logFile> ........................... Log file
 -n <name> .............................. Name of output archive (automatically add .tar.gz)
 -s <nbToSave> .......................... Save nbToSave backup and delete other
@@ -68,7 +70,9 @@ Example :
 backup -f \"dir_1 dir_2 dir_3\" -o dest_folder
 backup -c config.txt -o dest_folder
 backup -f \"dir_1 dir_2 dir_3\" -o dest_folder -l logfile.log
-backup -f \"dir_1 dir_2 dir_3\" -o dest_folder -p passphrase"
+backup -f \"dir_1 dir_2 dir_3\" -o dest_folder -p passphrase
+backup -r /path/to/backup/ -o path/to/extract -n name
+"
 
     exit 0
 }
@@ -127,6 +131,16 @@ function encryptFile() {
     rm $backup_dest/$archive_name
     echo_out $"Encryption $backup_dest/$archive_name.gpg end"
 }
+
+# TODO : decryptFile
+# function decryptFile() {
+#     local name=$([ "A$archive_name" != "A" ] && echo "$archive_name" || echo "backup_${hostname}")
+#     local archive_date=$(ls $backup_folders | grep $name | cut -d '.' -f 2 | sort -r | head -1)
+#     local out=$(([ $log -eq 1 ] || [ $verbose -eq 0 ]) && echo /dev/null || echo /dev/stdout)
+
+#     echo_out $"Decryption of $backup_folders/$archive_name.gpg"
+#     if ! gpg --batch --passphrase $pass -d $backup_folders/$archive_name
+# }
 
 function compressFile() {
     local date=$(date +%Y-%m-%d)
@@ -189,6 +203,10 @@ function restoreFile() {
         exit 1
     fi
 }
+
+# TODO : gitPushFile
+# function gitPushFile() {
+# }
 
 if [ $# -ge 1 ]; then
     for i in $(seq 1 $#); do

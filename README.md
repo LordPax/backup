@@ -24,4 +24,5 @@ backup -f \"dir_1 dir_2 dir_3\" -o dest_folder
 backup -c config.txt -o dest_folder
 backup -f \"dir_1 dir_2 dir_3\" -o dest_folder -l logfile.log
 backup -f \"dir_1 dir_2 dir_3\" -o dest_folder -p passphrase
+backup -r /path/to/backup/ -o path/to/extract -n name
 ```
