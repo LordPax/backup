@@ -144,7 +144,8 @@ function encryptFile() {
 
 function compressFile() {
     local date=$(date +%Y-%m-%d)
-    local hostname=$(hostname -s)
+    # local hostname=$(hostname -s)
+    local hostname=$(hostnamectl hostname)
     local out=$(([ $log -eq 1 ] || [ $verbose -eq 0 ]) && echo /dev/null || echo /dev/stdout)
     
     local name=$([ "A$archive_name" != "A" ] && echo "${archive_name}.${date}.tar.gz" || echo "backup_${hostname}.${date}.tar.gz")
