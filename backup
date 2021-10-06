@@ -1,6 +1,6 @@
 #!/bin/bash
 # author : lordpax
-# backup v3.0
+# backup v3.1
 # Petit script de backup
 
 export TEXTDOMAIN="backup"
@@ -230,6 +230,7 @@ function gitPushFile() {
     local repo_dir="$backup_dest/$repo"
     local date=$(date +%Y-%m-%d)
     local init_pos=$(pwd)
+    local file=$(ls -a $repo_dir)
 
     if [ ! -d $repo_dir ]; then 
         mkdir -p $repo_dir
@@ -237,11 +238,9 @@ function gitPushFile() {
         git init
         git remote add origin $url
         echo_out $"Creation of repository"
-    else
-        cd $repo_dir
+        cd $init_pos
     fi
 
-    cd $init_pos
     if ! cp -r $backup_folders $repo_dir; then
         echo_err $"Something wrong with copy"
         exit 1
@@ -249,7 +248,9 @@ function gitPushFile() {
 
     echo_out $"File is moved"
 
-    git add *
+    cd $repo_dir
+
+    git add $file
     git commit -am "maj : backup $date"
 
     if ! git push origin $branch; then
