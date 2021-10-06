@@ -12,7 +12,7 @@ backup_folders=""
 backup_dest="."
 log=0
 logFile=""
-version="v3.0"
+version="v3.1"
 archive_name=""
 verbose=0
 nbToSave=0
@@ -61,7 +61,7 @@ Option :
 -f \"<dir1> [dirN]\" ..................... Source folder
 -c <config> ............................ File which contain source folders name
 -r <backupDir> ......................... Restore backup from backupDir to outputDir
--g <config> <url> [branch] ............. Push file into a git repo (soon)
+-g <config> [branch] ................... Push file into a git repo 
 -o <outputDir> ......................... Destination folder
 -p <pass> .............................. Pass phrase encrypt
 -d <pass> .............................. Pass phrase decrypt (soon)
@@ -75,7 +75,7 @@ backup -c config.txt -o dest_folder
 backup -f \"dir_1 dir_2 dir_3\" -o dest_folder -l logfile.log
 backup -f \"dir_1 dir_2 dir_3\" -o dest_folder -p passphrase
 backup -r /path/to/backup/ -o path/to/extract -n name
-backup -g config.txt git@github.com:aze/xyz.git branch_name -o repo_folder 
+backup -g config.txt branch_name -o repo_folder 
 "
 
     exit 0
@@ -95,16 +95,14 @@ function verification() {
         exit 1
     fi
 
-    if [ $gitmode -eq 0 ]; then
-        if [ "A$backup_dest" != "A" ]; then
-            if [ ! -d $backup_dest ]; then
-                echo_err $"Destination \"$backup_dest\" folder does not exist"
-                exit 1
-            fi
-        else
-            echo_err $"Destination folder is missing"
+    if [ "A$backup_dest" != "A" ]; then
+        if [ ! -d $backup_dest ]; then
+            echo_err $"Destination \"$backup_dest\" folder does not exist"
             exit 1
         fi
+    else
+        echo_err $"Destination folder is missing"
+        exit 1
     fi
 
     if [ $encrypt -eq 1 ] && [ "A$pass" = "A" ]; then
@@ -118,17 +116,17 @@ function verification() {
         exit 1
     fi
 
-    if [ $gitmode -eq 1 ] && [ "A$url" = "A" ]; then
-        gitmode=0
-        echo_err $"Git url is missing"
-        exit 1
-    fi
+    # if [ $gitmode -eq 1 ] && [ "A$url" = "A" ]; then
+    #     gitmode=0
+    #     echo_err $"Git url is missing"
+    #     exit 1
+    # fi
 
-    if [ $gitmode -eq 1 ] && [ "A$branch" = "A" ]; then
-        gitmode=0
-        echo_err $"Branch is missing"
-        exit 1
-    fi
+    # if [ $gitmode -eq 1 ] && [ "A$branch" = "A" ]; then
+    #     gitmode=0
+    #     echo_err $"Branch is missing"
+    #     exit 1
+    # fi
 }
 
 # readConfig <config>
@@ -226,22 +224,32 @@ function restoreFile() {
 # TODO : gitPushFile
 function gitPushFile() {
     # echo "file : $backup_folders, url : $url, branch : $branch, output : $backup_dest"
-    local repo=$(echo $url | cut -d '/' -f 2 | cut -d '.' -f 1) # TODO : à améliorer
-    local repo_dir="$backup_dest/$repo"
+    # local repo=$(echo $url | cut -d '/' -f 2 | cut -d '.' -f 1) # TODO : à améliorer
+    local repo_dir="$backup_dest"
+    # local repo_dir="$backup_dest/$repo"
     local date=$(date +%Y-%m-%d)
     local init_pos=$(pwd)
-    local file=$(ls -a $repo_dir)
+    local file=$(ls -a $repo_dir | grep -vE "\.$|\.\.$|.git")
 
-    if [ ! -d $repo_dir ]; then 
-        mkdir -p $repo_dir
-        cd $repo_dir
-        git init
-        git remote add origin $url
-        echo_out $"Creation of repository"
-        cd $init_pos
+    # if [ ! -d $repo_dir ]; then 
+    #     mkdir -p $repo_dir
+    #     cd $repo_dir
+    #     git init
+    #     git remote add origin $url
+    #     echo_out $"Creation of repository"
+    #     cd $init_pos
+    # fi
+
+    cd $repo_dir
+
+    if ! git checkout $branch; then
+        echo_err $"Something wrong git checkout"
+        exit 1
     fi
 
-    if ! cp -r $backup_folders $repo_dir; then
+    cd $init_pos
+
+    if ! cp -rf $backup_folders $repo_dir; then
         echo_err $"Something wrong with copy"
         exit 1
     fi
@@ -250,7 +258,7 @@ function gitPushFile() {
 
     cd $repo_dir
 
-    git add $file
+    git add $(ls -a | grep -vE "\.$|\.\.$|.git")
     git commit -am "maj : backup $date"
 
     if ! git push origin $branch; then
@@ -301,9 +309,8 @@ if [ $# -ge 1 ]; then
             shift 
             gitmode=1
             readConfig $1
-            url=$2
-            branch=$3
-            shift 2
+            branch=$2
+            shift 
         fi
         shift
     done
