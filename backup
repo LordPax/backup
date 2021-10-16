@@ -115,18 +115,6 @@ function verification() {
         echo_err $"Log file is missing"
         exit 1
     fi
-
-    # if [ $gitmode -eq 1 ] && [ "A$url" = "A" ]; then
-    #     gitmode=0
-    #     echo_err $"Git url is missing"
-    #     exit 1
-    # fi
-
-    # if [ $gitmode -eq 1 ] && [ "A$branch" = "A" ]; then
-    #     gitmode=0
-    #     echo_err $"Branch is missing"
-    #     exit 1
-    # fi
 }
 
 # readConfig <config>
@@ -221,24 +209,11 @@ function restoreFile() {
     fi
 }
 
-# TODO : gitPushFile
 function gitPushFile() {
-    # echo "file : $backup_folders, url : $url, branch : $branch, output : $backup_dest"
-    # local repo=$(echo $url | cut -d '/' -f 2 | cut -d '.' -f 1) # TODO : à améliorer
     local repo_dir="$backup_dest"
-    # local repo_dir="$backup_dest/$repo"
     local date=$(date +%Y-%m-%d)
     local init_pos=$(pwd)
     local file=$(ls -a $repo_dir | grep -vE "\.$|\.\.$|.git")
-
-    # if [ ! -d $repo_dir ]; then 
-    #     mkdir -p $repo_dir
-    #     cd $repo_dir
-    #     git init
-    #     git remote add origin $url
-    #     echo_out $"Creation of repository"
-    #     cd $init_pos
-    # fi
 
     cd $repo_dir
 
