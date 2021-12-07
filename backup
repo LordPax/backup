@@ -215,7 +215,6 @@ function restoreFile() {
 
 function gitPushFile() {
     local repo_dir="$backup_dest"
-    local date=$(date +%Y-%m-%d)
     local init_pos=$(pwd)
     local file=$(ls -a $repo_dir | grep -vE "\.$|\.\.$|.git")
 
