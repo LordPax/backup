@@ -71,10 +71,9 @@ Example :
 backup -f \"dir_1 dir_2 dir_3\" -o dest_folder
 backup -c config.txt -o dest_folder
 backup -f \"dir_1 dir_2 dir_3\" -o dest_folder -l logfile.log
-backup -f \"dir_1 dir_2 dir_3\" -o dest_folder -p passphrase
+backup -f \"dir_1 dir_2 dir_3\" -o dest_folder -e
 backup -r /path/to/backup/ -o path/to/extract -n name
-backup -g config.txt branch_name -o repo_folder 
-"
+backup -g config.txt branch_name -o repo_folder"
 
     exit 0
 }
