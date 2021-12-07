@@ -1,18 +1,17 @@
 #!/bin/bash
 # author : lordpax
-# backup v3.1
+# backup v3.2
 # Petit script de backup
 
 export TEXTDOMAIN="backup"
 
-pass=""
 encrypt=0
 tmp_folders=""
 backup_folders=""
 backup_dest="."
 log=0
 logFile=""
-version="v3.1"
+version="v3.2"
 archive_name=""
 verbose=0
 nbToSave=0
@@ -63,8 +62,7 @@ Option :
 -r <backupDir> ......................... Restore backup from backupDir to outputDir
 -g <config> [branch] ................... Push file into a git repo 
 -o <outputDir> ......................... Destination folder
--p <pass> .............................. Pass phrase encrypt
--d <pass> .............................. Pass phrase decrypt (soon)
+-e ..................................... Encrupt with phrase 
 -l <logFile> ........................... Log file
 -n <name> .............................. Name of output archive (automatically add .tar.gz)
 -s <nbToSave> .......................... Save nbToSave backup and delete other
@@ -82,6 +80,11 @@ backup -g config.txt branch_name -o repo_folder
 }
 
 function verification() {
+    date=$(date +%Y-%m-%d)
+    # hostname=$(hostname -s)
+    hostname=$(hostnamectl hostname)
+    out=$(([ $log -eq 1 ] || [ $verbose -eq 0 ]) && echo /dev/null || echo /dev/stdout)
+
     if [ "A$tmp_folders" != "A" ]; then
         for file in $tmp_folders; do
             if [ -d $file ] || [ -f $file ]; then
@@ -105,11 +108,6 @@ function verification() {
         exit 1
     fi
 
-    if [ $encrypt -eq 1 ] && [ "A$pass" = "A" ]; then
-        echo_err $"Passphrase is missing"
-        exit 1
-    fi
-
     if [ $log -eq 1 ] && [ "A$logFile" = "A" ]; then
         log=0
         echo_err $"Log file is missing"
@@ -127,31 +125,34 @@ function readConfig() {
 }
 
 function encryptFile() {
-    echo_out $"Encryption of $backup_dest/$archive_name"
-    if ! gpg --batch --passphrase $pass -c $backup_dest/$archive_name; then
+    local name=$([ "A$archive_name" != "A" ] && echo "${archive_name}.${date}.tar.gz" || echo "backup_${hostname}.${date}.tar.gz")
+
+    echo_out $"Encryption of $backup_dest/$archive_name ..."
+    if ! gpg -c $backup_dest/$name &> $out; then
         echo_err $"Something wrong with encrytion"
         exit 1
     fi
-    rm $backup_dest/$archive_name
-    echo_out $"Encryption $backup_dest/$archive_name.gpg end"
+    rm $backup_dest/$name
+    echo_out $"Encryption $backup_dest/$name.gpg end"
 }
 
-# TODO : decryptFile
-# function decryptFile() {
-#     local name=$([ "A$archive_name" != "A" ] && echo "$archive_name" || echo "backup_${hostname}")
-#     local archive_date=$(ls $backup_folders | grep $name | cut -d '.' -f 2 | sort -r | head -1)
-#     local out=$(([ $log -eq 1 ] || [ $verbose -eq 0 ]) && echo /dev/null || echo /dev/stdout)
-
-#     echo_out $"Decryption of $backup_folders/$archive_name.gpg"
-#     if ! gpg --batch --passphrase $pass -d $backup_folders/$archive_name
-# }
+# decryptFile <encryptedFile>
+function decryptFile() {
+    if [ "A$1" != "A" ]; then
+        local crypted_file=$1
+        echo_out $"Decryption of $crypted_file.gpg ..."
+        if ! gpg -o $crypted_file -d $crypted_file.gpg &> $out; then
+            echo_err $"Something wrong with decryption"
+            exit 1
+        fi
+        echo_out $"Decryption $crypted_file.gpg end"
+    else
+        echo_err $"Encrypted file missing"
+        exit 1
+    fi
+}
 
 function compressFile() {
-    local date=$(date +%Y-%m-%d)
-    # local hostname=$(hostname -s)
-    local hostname=$(hostnamectl hostname)
-    local out=$(([ $log -eq 1 ] || [ $verbose -eq 0 ]) && echo /dev/null || echo /dev/stdout)
-    
     local name=$([ "A$archive_name" != "A" ] && echo "${archive_name}.${date}.tar.gz" || echo "backup_${hostname}.${date}.tar.gz")
 
     echo_out $"Compress of :"
@@ -172,8 +173,6 @@ function compressFile() {
 # conserve les nbToSave les plus récentes et supprime les autres
 function delete() {
     if [ "A$1" != "A" ]; then
-        local date=$(date +%Y-%m-%d)
-        local hostname=$(hostname -s)
         local name=$([ "A$archive_name" != "A" ] && echo "$archive_name" || echo "backup_${hostname}")
         local nbFile=$(ls $backup_dest | grep $name | wc -l)
         local nbToDel=$(( nbFile - $1 ))
@@ -195,18 +194,23 @@ function delete() {
 function restoreFile() {
     local name=$([ "A$archive_name" != "A" ] && echo "$archive_name" || echo "backup_${hostname}")
     local archive_date=$(ls $backup_folders | grep $name | cut -d '.' -f 2 | sort -r | head -1)
-    local out=$(([ $log -eq 1 ] || [ $verbose -eq 0 ]) && echo /dev/null || echo /dev/stdout)
+    local archive_ext=$(ls $backup_folders | grep $name | cut -d '.' -f 5 | sort -r | head -1)
+    local full_name="$backup_folders/${name}.${archive_date}.tar.gz"
 
     if [ "A$archive_date" == "A" ]; then
         echo_err $"No backup found"
         exit 1
     fi
     
-    echo_out $"Restoration of $backup_folders/${name}.${archive_date}.tar.gz to $backup_dest"
-    if ! tar xfz $backup_folders/${name}.${archive_date}.tar.gz -C $backup_dest &> $out; then
+    [ "A$archive_ext" == "Agpg" ] && decryptFile $full_name
+    
+    echo_out $"Restoration of $full_name to $backup_dest"
+    if ! tar xfz $full_name -C $backup_dest &> $out; then
         echo_err $"Something wrong with restoration"
         exit 1
     fi
+
+    [ "A$archive_ext" == "Agpg" ] && rm $full_name
 }
 
 function gitPushFile() {
@@ -270,10 +274,8 @@ if [ $# -ge 1 ]; then
             shift
             log=1
             logFile=$1
-        elif [ "$1" == "-p" ]; then
-            shift
+        elif [ "$1" == "-e" ]; then
             encrypt=1
-            pass=$1
         elif [ "$1" == "-n" ]; then
             shift
             archive_name=$1
@@ -292,7 +294,6 @@ if [ $# -ge 1 ]; then
 fi
 
 verification
-# [ $restore -eq 0 ] && compressFile || restoreFile
 if [ $restore -eq 1 ]; then restoreFile
 elif [ $gitmode -eq 1 ]; then gitPushFile
 else compressFile
