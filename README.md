@@ -2,6 +2,10 @@
 ## Description
 Juste un petit script de backup
 
+## Pre-requis
+* aescrypt
+* shred
+
 ## Usage
 ```
 Usage : $0 [option]
@@ -15,7 +19,7 @@ Option :
 -r <backupDir> ......................... Restore backup from backupDir to outputDir
 -g <config> [branch] ................... Push file into a git repo 
 -o <outputDir> ......................... Destination folder
--e ..................................... Encrupt with phrase 
+-e ..................................... Encrypt with passphrase 
 -l <logFile> ........................... Log file
 -n <name> .............................. Name of output archive (automatically add .tar.gz)
 -s <nbToSave> .......................... Save nbToSave backup and delete other

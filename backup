@@ -1,6 +1,6 @@
 #!/bin/bash
 # author : lordpax
-# backup v3.2
+# backup v3.3
 # Petit script de backup
 
 export TEXTDOMAIN="backup"
@@ -11,7 +11,7 @@ backup_folders=""
 backup_dest="."
 log=0
 logFile=""
-version="v3.2"
+version="v3.3"
 archive_name=""
 verbose=0
 nbToSave=0
@@ -62,7 +62,7 @@ Option :
 -r <backupDir> ......................... Restore backup from backupDir to outputDir
 -g <config> [branch] ................... Push file into a git repo 
 -o <outputDir> ......................... Destination folder
--e ..................................... Encrupt with phrase 
+-e ..................................... Encrypt with passphrase 
 -l <logFile> ........................... Log file
 -n <name> .............................. Name of output archive (automatically add .tar.gz)
 -s <nbToSave> .......................... Save nbToSave backup and delete other
@@ -126,25 +126,30 @@ function readConfig() {
 function encryptFile() {
     local name=$([ "A$archive_name" != "A" ] && echo "${archive_name}.${date}.tar.gz" || echo "backup_${hostname}.${date}.tar.gz")
 
-    echo_out $"Encryption of $backup_dest/$archive_name ..."
-    if ! gpg -c $backup_dest/$name &> $out; then
+    echo_out $"Encryption of $backup_dest/$name ..."
+    if ! aescrypt -e $backup_dest/$name &> $out; then
         echo_err $"Something wrong with encrytion"
         exit 1
     fi
-    rm $backup_dest/$name
-    echo_out $"Encryption $backup_dest/$name.gpg end"
+    echo_out $"Encryption $backup_dest/$name.aes end"
+
+    echo_out $"Wiping of $backup_dest/$name ..."
+    if ! shred -zvu $backup_dest/$name &> $out; then
+        echo_err $"Something wrong with wiping"
+        exit 1
+    fi
 }
 
 # decryptFile <encryptedFile>
 function decryptFile() {
     if [ "A$1" != "A" ]; then
         local crypted_file=$1
-        echo_out $"Decryption of $crypted_file.gpg ..."
-        if ! gpg -o $crypted_file -d $crypted_file.gpg &> $out; then
+        echo_out $"Decryption of $crypted_file.aes ..."
+        if ! aescrypt -d $crypted_file.aes &> $out; then
             echo_err $"Something wrong with decryption"
             exit 1
         fi
-        echo_out $"Decryption $crypted_file.gpg end"
+        echo_out $"Decryption $crypted_file.aes end"
     else
         echo_err $"Encrypted file missing"
         exit 1
@@ -175,6 +180,7 @@ function delete() {
         local name=$([ "A$archive_name" != "A" ] && echo "$archive_name" || echo "backup_${hostname}")
         local nbFile=$(ls $backup_dest | grep $name | wc -l)
         local nbToDel=$(( nbFile - $1 ))
+        local extEnc=$([ $encrypt -eq 1 ] && echo ".aes" || echo "")
 
         if [ $nbToDel -gt 0 ]; then 
             local archive_date=$(ls $backup_dest | grep $name | cut -d '.' -f 2 | sort -r | tail -$nbToDel)
@@ -182,8 +188,8 @@ function delete() {
             echo_out "Deleting $nbToDel old backup : "
             
             for elem in $archive_date; do
-                echo_out "  -> Deleting $backup_dest/${name}.${elem}.tar.gz ..."
-                rm $backup_dest/${name}.${elem}.tar.gz
+                echo_out "  -> Deleting $backup_dest/${name}.${elem}.tar.gz$extEnc ..."
+                rm $backup_dest/${name}.${elem}.tar.gz$extEnc
             done
         fi
     fi
@@ -201,7 +207,7 @@ function restoreFile() {
         exit 1
     fi
     
-    [ "A$archive_ext" == "Agpg" ] && decryptFile $full_name
+    [ "A$archive_ext" == "Aaes" ] && decryptFile $full_name
     
     echo_out $"Restoration of $full_name to $backup_dest"
     if ! tar xfz $full_name -C $backup_dest &> $out; then
@@ -209,7 +215,13 @@ function restoreFile() {
         exit 1
     fi
 
-    [ "A$archive_ext" == "Agpg" ] && rm $full_name
+    if [ "A$archive_ext" == "Aaes" ]; then 
+        echo_out $"Wiping of $full_name ..."
+        if ! shred -zvu $full_name &> $out; then
+            echo_err $"Something wrong with wiping"
+            exit 1
+        fi
+    fi
 }
 
 function gitPushFile() {
