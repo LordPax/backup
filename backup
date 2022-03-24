@@ -1,6 +1,6 @@
 #!/bin/bash
 # author : lordpax
-# backup v3.3
+# backup v3.3.1
 # Petit script de backup
 
 export TEXTDOMAIN="backup"
@@ -11,7 +11,7 @@ backup_folders=""
 backup_dest="."
 log=0
 logFile=""
-version="v3.3"
+version="v3.3.1"
 archive_name=""
 verbose=0
 nbToSave=0
@@ -166,7 +166,7 @@ function compressFile() {
 
     echo_out $"Backup $backup_dest/$name in progress ..."
     if ! tar czfv $backup_dest/$name $backup_folders &> $out; then
-        echo_err $"Something wrong with compression"
+        echo_err $"Something wrong with compression of $backup_dest/$name"
         exit 1
     fi
 
