@@ -1,6 +1,6 @@
 #!/bin/bash
 # author : lordpax
-# backup v3.3.1
+# backup v3.3.2
 # Petit script de backup
 
 export TEXTDOMAIN="backup"
@@ -11,7 +11,7 @@ backup_folders=""
 backup_dest="."
 log=0
 logFile=""
-version="v3.3.1"
+version="v3.3.2"
 archive_name=""
 verbose=0
 nbToSave=0
@@ -260,45 +260,51 @@ function gitPushFile() {
 
 if [ $# -ge 1 ]; then
     for i in $(seq 1 $#); do
-        if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then 
-            helpFunc
-        elif [ "$1" == "--verbose" ] || [ "$1" == "-V" ]; then 
-            verbose=1
-        elif [ "$1" == "--version" ] || [ "$1" == "-v" ]; then 
-            echo_out $version
-            exit 0
-        elif [ "$1" == "-f" ]; then
-            shift
-            tmp_folders=$1
-        elif [ "$1" == "-r" ]; then
-            shift
-            restore=1
-            tmp_folders=$1
-        elif [ "$1" == "-o" ]; then
-            shift
-            backup_dest=$1
-        elif [ "$1" == "-c" ]; then
-            shift
-            readConfig $1
-        elif [ "$1" == "-l" ]; then
-            shift
-            log=1
-            logFile=$1
-        elif [ "$1" == "-e" ]; then
-            encrypt=1
-        elif [ "$1" == "-n" ]; then
-            shift
-            archive_name=$1
-        elif [ "$1" == "-s" ]; then
-            shift
-            nbToSave=$1
-        elif [ "$1" == "-g" ]; then
-            shift 
-            gitmode=1
-            readConfig $1
-            branch=$2
-            shift 
-        fi
+        case $1 in
+            --help | -h)
+                helpFunc;;
+            --verbose | -V)
+                verbose=1;;
+            --version | -v)
+                echo_out $version
+                exit 0;;
+            -f)
+                shift
+                tmp_folders=$1;;
+            -r)
+                shift
+                restore=1
+                tmp_folders=$1;;
+            -o)
+                shift
+                backup_dest=$1;;
+            -c)
+                shift
+                readConfig $1;;
+            -l)
+                shift
+                log=1
+                logFile=$1;;
+            -e)
+                encrypt=1;;
+            -n)
+                shift
+                archive_name=$1;;
+            -s)
+                shift
+                nbToSave=$1;;
+            -g)
+                shift 
+                gitmode=1
+                readConfig $1
+                branch=$2
+                shift;;
+            "")
+                ;;
+            *)
+                echo_err $"Unknown parameter \"$1\""
+                exit 1
+        esac
         shift
     done
 fi
