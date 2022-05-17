@@ -8,7 +8,7 @@ Juste un petit script de backup
 
 ## Usage
 ```
-Usage : $0 [option]
+Usage : backup [option]
 
 Option :
 -h or --help ........................... Show help
