@@ -1,6 +1,6 @@
 #!/bin/bash
 # author : lordpax
-# backup v3.3.3
+# backup v3.3.4
 # Petit script de backup
 
 export TEXTDOMAIN="backup"
@@ -11,7 +11,7 @@ backup_folders=""
 backup_dest="."
 log=0
 logFile=""
-version="v3.3.3"
+version="v3.3.4"
 archive_name=""
 verbose=0
 nbToSave=0
@@ -48,7 +48,7 @@ function echo_out() {
 }
 
 function helpFunc() {
-    echo_out $"Usage : $0 [option]
+    echo_out $"Usage : $(basename $0) [option]
 
 Option :
 -h or --help ........................... Show help
@@ -70,7 +70,12 @@ backup -c config.txt -o dest_folder
 backup -f \"dir_1 dir_2 dir_3\" -o dest_folder -l logfile.log
 backup -f \"dir_1 dir_2 dir_3\" -o dest_folder -e
 backup -r /path/to/backup/ -o path/to/extract -n name
-backup -g config.txt branch_name -o repo_folder"
+backup -g config.txt branch_name -o repo_folder
+
+Config file example :
+path/to/dir_1
+# comment
+path/to/dir_3"
 
     exit 0
 }
@@ -115,7 +120,7 @@ function verification() {
 function readConfig() {
     [ "$1" == "" ] && echo_err $"Parameter needed for readConfig" && exit 1
     while read line; do
-        tmp_folders="$tmp_folders $line"
+        [ "${line:0:1}" != "#" ] && tmp_folders="$tmp_folders $line"
     done < $1
 }
 
@@ -196,7 +201,7 @@ function restoreFile() {
 
     [ "$archive_date" == "" ] && echo_err $"No backup found" && exit 1
     [ "$archive_ext" == "aes" ] && decryptFile $full_name
-    
+
     echo_out $"Restoration of $full_name to $backup_dest"
     if ! tar xfz $full_name -C $backup_dest &> $out; then
         echo_err $"Something wrong with restoration"
