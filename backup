@@ -41,7 +41,7 @@ function echo_err() {
 function echo_out() {
     [ "$1" == "" ] && exit 1
     if [ $log -eq 1 ]; then
-        echo_log "$1" 
+        echo_log "$1"
     else
         echo -e "$1"
     fi
@@ -57,9 +57,9 @@ Option :
 -f \"<dir1> [dirN]\" ..................... Source folder
 -c <config> ............................ File which contain source folders name
 -r <backupDir> ......................... Restore backup from backupDir to outputDir
--g <config> [branch] ................... Push file into a git repo 
+-g <config> [branch] ................... Push file into a git repo
 -o <outputDir> ......................... Destination folder
--e ..................................... Encrypt with passphrase 
+-e ..................................... Encrypt with passphrase
 -l <logFile> ........................... Log file
 -n <name> .............................. Name of output archive (automatically add .tar.gz)
 -s <nbToSave> .......................... Save nbToSave backup and delete other
@@ -180,7 +180,7 @@ function delete() {
     local nbToDel=$(( nbFile - $1 ))
     local extEnc=$([ $encrypt -eq 1 ] && echo ".aes" || echo "")
 
-    if [ $nbToDel -gt 0 ]; then 
+    if [ $nbToDel -gt 0 ]; then
         local archive_date=$(ls $backup_dest | grep $name | cut -d '.' -f 2 | sort -r | tail -$nbToDel)
 
         echo_out "Deleting $nbToDel old backup : "
@@ -192,7 +192,7 @@ function delete() {
     fi
 }
 
-# restoreFile 
+# restoreFile
 function restoreFile() {
     local name=$([ "A$archive_name" != "A" ] && echo "$archive_name" || echo "backup_${hostname}")
     local archive_date=$(ls $backup_folders | grep $name | cut -d '.' -f 2 | sort -r | head -1)
@@ -208,7 +208,7 @@ function restoreFile() {
         exit 1
     fi
 
-    if [ "$archive_ext" == "aes" ]; then 
+    if [ "$archive_ext" == "aes" ]; then
         echo_out $"Wiping of $full_name ..."
         if ! shred -zvu $full_name &> $out; then
             echo_err $"Something wrong with wiping"
