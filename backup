@@ -222,6 +222,11 @@ function gitPushFile() {
     local init_pos=$(pwd)
     local file=$(ls -a $repo_dir | grep -vE "\.$|\.\.$|.git")
 
+    echo_out $"Moving file :"
+    for file in $backup_folders; do
+        echo_out "  -> $file"
+    done
+
     cd $repo_dir
 
     if ! git checkout $branch; then
