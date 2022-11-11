@@ -18,7 +18,6 @@ nbToSave=0
 restore=0
 gitmode=0
 branch="master"
-url=""
 
 # echo_deb <msg>
 function echo_log() {
@@ -86,7 +85,7 @@ function verification() {
     hostname=$(hostnamectl hostname)
     out=$( ([ $log -eq 1 ] || [ $verbose -eq 0 ]) && echo /dev/null || echo /dev/stdout)
 
-    if [ "A$tmp_folders" != "A" ]; then
+    if [ "$tmp_folders" != "" ]; then
         for file in $tmp_folders; do
             if [ -d $file ] || [ -f $file ]; then
                 backup_folders="$backup_folders $file"
@@ -99,7 +98,7 @@ function verification() {
         exit 1
     fi
 
-    if [ "A$backup_dest" != "A" ]; then
+    if [ "$backup_dest" != "" ]; then
         if [ ! -d $backup_dest ]; then
             echo_err $"Destination \"$backup_dest\" folder does not exist"
             exit 1
@@ -109,7 +108,7 @@ function verification() {
         exit 1
     fi
 
-    if [ $log -eq 1 ] && [ "A$logFile" = "A" ]; then
+    if [ $log -eq 1 ] && [ "$logFile" = "" ]; then
         log=0
         echo_err $"Log file is missing"
         exit 1
@@ -125,7 +124,7 @@ function readConfig() {
 }
 
 function encryptFile() {
-    local name=$([ "A$archive_name" != "A" ] && echo "${archive_name}.${date}.tar.gz" || echo "backup_${hostname}.${date}.tar.gz")
+    local name=$([ "$archive_name" != "" ] && echo "${archive_name}.${date}.tar.gz" || echo "backup_${hostname}.${date}.tar.gz")
 
     echo_out $"Encryption of $backup_dest/$name ..."
     if ! aescrypt -e $backup_dest/$name &> $out; then
@@ -155,7 +154,7 @@ function decryptFile() {
 }
 
 function compressFile() {
-    local name=$([ "A$archive_name" != "A" ] && echo "${archive_name}.${date}.tar.gz" || echo "backup_${hostname}.${date}.tar.gz")
+    local name=$([ "$archive_name" != "" ] && echo "${archive_name}.${date}.tar.gz" || echo "backup_${hostname}.${date}.tar.gz")
 
     echo_out $"Compress of :"
     for file in $backup_folders; do
@@ -175,8 +174,8 @@ function compressFile() {
 # conserve les nbToSave les plus récentes et supprime les autres
 function delete() {
     [ "$1" == "" ] && echo_err $"Parameter needed for delete" && exit 1
-    local name=$([ "A$archive_name" != "A" ] && echo "$archive_name" || echo "backup_${hostname}")
-    local nbFile=$(ls $backup_dest | grep $name | wc -l)
+    local name=$([ "$archive_name" != "" ] && echo "$archive_name" || echo "backup_${hostname}")
+    local nbFile=$(ls $backup_dest | grep -c $name)
     local nbToDel=$(( nbFile - $1 ))
     local extEnc=$([ $encrypt -eq 1 ] && echo ".aes" || echo "")
 
@@ -187,14 +186,14 @@ function delete() {
 
         for elem in $archive_date; do
             echo_out "  -> Deleting $backup_dest/${name}.${elem}.tar.gz$extEnc ..."
-            rm $backup_dest/${name}.${elem}.tar.gz$extEnc
+            rm "$backup_dest/${name}.${elem}.tar.gz$extEnc"
         done
     fi
 }
 
 # restoreFile
 function restoreFile() {
-    local name=$([ "A$archive_name" != "A" ] && echo "$archive_name" || echo "backup_${hostname}")
+    local name=$([ "$archive_name" != "" ] && echo "$archive_name" || echo "backup_${hostname}")
     local archive_date=$(ls $backup_folders | grep $name | cut -d '.' -f 2 | sort -r | head -1)
     local archive_ext=$(ls $backup_folders | grep $name | cut -d '.' -f 5 | sort -r | head -1)
     local full_name="$backup_folders/${name}.${archive_date}.tar.gz"
