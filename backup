@@ -235,6 +235,7 @@ function gitPushFile() {
 
     cd $init_pos
 
+    # if ! rsync -r $backup_folders $repo_dir; then
     if ! cp -rf $backup_folders $repo_dir; then
         echo_err $"Something wrong with copy"
         exit 1
@@ -244,8 +245,15 @@ function gitPushFile() {
 
     cd $repo_dir
 
-    git add $(ls -a | grep -vE "\.$|\.\.$|.git")
-    git commit -am "maj : backup $date"
+    if ! git add $(ls -a | grep -vE "\.$|\.\.$|.git"); then
+        echo_err $"Something wrong with git add"
+        exit 1
+    fi
+
+    if ! git commit -am "maj : backup $date"; then
+        echo_err $"Something wrong with git commit"
+        exit 1
+    fi
 
     if ! git push origin $branch; then
         echo_err $"Something wrong with git push"
