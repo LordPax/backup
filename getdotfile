@@ -5,8 +5,9 @@ repo="https://raw.githubusercontent.com/LordPax/dotfile"
 branch="$DOTFILE_BRANCH"
 files=""
 backup=0
-readfile=0
-output=""
+mode=0
+output="$HOME"
+version="0.1.0"
 
 # echoErr <msg>
 function echoErr() {
@@ -18,11 +19,13 @@ function helpFunc() {
     echo "Usage: $name [options] <file> [files] ...
 
 Options :
--h or --help      Display this help
--b or --branch    Branch to use (default: $branch)
--B or --backup    Backup of an existing file and add \"_old\" at the end
--r or --read      Output file to stdout
--o or --output    Output directory
+-h or --help       Display this help
+-v or --version    Display version
+-b <branch>        Branch to use (default: $branch)
+-o <file>          Output directory
+-B                 Backup of an existing file and add \"_old\" at the end
+-r                 Output file to stdout
+-d                 Diff between local and remote file
 
 Example :
 $name .vimrc
@@ -71,6 +74,20 @@ function readFile() {
     fi
 }
 
+# diffFile <branch> <file>
+function diffFile () {
+    ([ "$1" == "" ] || [ "$2" == "" ]) && echoErr "Parameter needed for \"diffFile\"" && exit 1
+    local out=$([ "$output" == "" ] && echo "$2" || echo "$output/$2")
+    [ ! -f "$out" ] && echoErr "File \"$out\" doesn't exist" && exit 1
+
+    diff -u "$out" <(wget "$repo/$1/$2" -O - 2> /dev/null)
+    # if ! diff -u "$out" <(wget "$repo/$1/$2" -O - 2> /dev/null); then
+    #     echo "err : $?"
+    #     echoErr "Something went wrong while doing diff with \"$2\""
+    #     return 1
+    # fi
+}
+
 if [ $# -ge 1 ]; then
     for i in $(seq 1 $#); do
         case $1 in
@@ -83,7 +100,9 @@ if [ $# -ge 1 ]; then
             -B | --backup)
                 backup=1;;
             -r | --read)
-                readfile=1;;
+                mode=1;;
+            -d | --diff)
+                mode=2;;
             -o | --output)
                 output="$2"
                 shift;;
@@ -101,9 +120,12 @@ fi
 verification
 
 for file in $files; do
-    if [ $readfile -eq 1 ]; then
-        readFile "$branch" "$file"
-    else
-        getFile "$branch" "$file"
-    fi
+    case $mode in
+        0)
+            getFile "$branch" "$file";;
+        1)
+            readFile "$branch" "$file";;
+        2)
+            diffFile "$branch" "$file";;
+    esac
 done
