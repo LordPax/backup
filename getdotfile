@@ -94,16 +94,19 @@ if [ $# -ge 1 ]; then
             -h | --help)
                 helpFunc
                 exit 0;;
-            -b | --branch)
+            -v | --version)
+                echo "v$version"
+                exit 0;;
+            -b)
                 branch="$2"
                 shift;;
-            -B | --backup)
+            -B)
                 backup=1;;
-            -r | --read)
+            -r)
                 mode=1;;
-            -d | --diff)
+            -d)
                 mode=2;;
-            -o | --output)
+            -o)
                 output="$2"
                 shift;;
             "") ;;
