@@ -81,11 +81,14 @@ function diffFile () {
     [ ! -f "$out" ] && echoErr "File \"$out\" doesn't exist" && exit 1
 
     diff -u "$out" <(wget "$repo/$1/$2" -O - 2> /dev/null)
-    # if ! diff -u "$out" <(wget "$repo/$1/$2" -O - 2> /dev/null); then
-    #     echo "err : $?"
-    #     echoErr "Something went wrong while doing diff with \"$2\""
-    #     return 1
-    # fi
+    local res=$?
+
+    if [ $res -eq 0 ]; then
+        echo "No difference between local and remote file"
+    elif [ $res -eq 2 ]; then
+        echoErr "Something went wrong while diffing \"$2\""
+        return 1
+    fi
 }
 
 if [ $# -ge 1 ]; then
