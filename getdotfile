@@ -7,7 +7,7 @@ files=""
 backup=0
 mode=0
 output="$HOME"
-version="0.1.1"
+version="v0.1.1"
 
 # echoErr <msg>
 function echoErr() {
@@ -84,9 +84,9 @@ function diffFile () {
     local res=$?
 
     if [ $res -eq 0 ]; then
-        echo "No difference between local and remote file"
+        echoErr "No difference between local and remote \"$out\""
     elif [ $res -eq 2 ]; then
-        echoErr "Something went wrong while diffing \"$2\""
+        echoErr "Something went wrong while doing diff of \"$out\""
         return 1
     fi
 }
@@ -98,7 +98,7 @@ if [ $# -ge 1 ]; then
                 helpFunc
                 exit 0;;
             -v | --version)
-                echo "v$version"
+                echo "$version"
                 exit 0;;
             -b)
                 branch="$2"
