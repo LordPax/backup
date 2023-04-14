@@ -1,12 +1,16 @@
 # Backup
+
 ## Description
+
 Juste un petit script de backup
 
-## Pre-requis
-* aescrypt
-* shred
+## Pre-requis backup
 
-## Usage
+* `aescrypt`
+* `shred`
+
+## Usage backup
+
 ```
 Usage : backup [option]
 
@@ -36,4 +40,30 @@ Config file example :
 path/to/dir_1
 # comment
 path/to/dir_3
+```
+
+## Pre-requis getdotfile
+
+* `bat`
+
+## Usage getdotfile
+
+```
+Usage: getdotfile [options] <file> [files] ...
+
+Options :
+-h or --help       Display this help
+-v or --version    Display version
+-b <branch>        Branch to use (default: compute-1)
+-o <file>          Output directory
+-B                 Backup of an existing file and add "_old" at the end
+-r                 Output file to stdout
+-d                 Diff between local and remote file
+
+Example :
+getdotfile .vimrc
+getdotfile .vimrc .tmux.conf
+getdotfile -B .vimrc
+getdotfile -o .config i3/config
+getdotfile -B -o .config i3/config
 ```

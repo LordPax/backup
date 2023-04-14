@@ -36,6 +36,7 @@ $name -B -o .config i3/config"
 }
 
 function verification() {
+    [ "$(which bat 2> /dev/null)" == "" ] && echo_err "\"bat\" is required for syntax highligting" && exit 1
     [ "$branch" == "" ] && echoErr "No branch specified" && exit 1
     [ "$files" == "" ] && echoErr "No files specified" && exit 1
 }
@@ -130,8 +131,8 @@ for file in $files; do
         0)
             getFile "$branch" "$file";;
         1)
-            readFile "$branch" "$file";;
+            readFile "$branch" "$file" | bat -p;;
         2)
-            diffFile "$branch" "$file";;
+            diffFile "$branch" "$file" | bat -p;;
     esac
 done
