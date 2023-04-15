@@ -21,14 +21,14 @@ branch="master"
 
 # echo_deb <msg>
 function echo_log() {
-    ([ "$1" == "" ] || [ "$logFile" == "" ]) && exit 1
+    ([ -z "$1" ] || [ -z "$logFile" ]) && exit 1
     local date=$(date "+%Y-%m-%d %H:%M:%S")
-    echo -e "$date : $1" >> $logFile
+    echo -e "$date : $1" >> "$logFile"
 }
 
 # echo_err <msg>
 function echo_err() {
-    [ "$1" == "" ] && exit 1
+    [ -z "$1" ] && exit 1
     if [ $log -eq 1 ]; then
         echo_log "ERROR : $1"
     else
@@ -38,7 +38,7 @@ function echo_err() {
 
 # echo_out <msg>
 function echo_out() {
-    [ "$1" == "" ] && exit 1
+    [ -z "$1" ] && exit 1
     if [ $log -eq 1 ]; then
         echo_log "$1"
     else
@@ -47,7 +47,7 @@ function echo_out() {
 }
 
 function helpFunc() {
-    echo_out $"Usage : $(basename $0) [option]
+    echo_out $"Usage : $(basename "$0") [option]
 
 Option :
 -h or --help              Show help
@@ -64,12 +64,12 @@ Option :
 -s <nbToSave>             Save nbToSave backup and delete other
 
 Example :
-backup -f \"dir_1 dir_2 dir_3\" -o dest_folder
-backup -c config.txt -o dest_folder
-backup -f \"dir_1 dir_2 dir_3\" -o dest_folder -l logfile.log
-backup -f \"dir_1 dir_2 dir_3\" -o dest_folder -e
-backup -r /path/to/backup/ -o path/to/extract -n name
-backup -g config.txt branch_name -o repo_folder
+$(basename "$0") -f \"dir_1 dir_2 dir_3\" -o dest_folder
+$(basename "$0") -c config.txt -o dest_folder
+$(basename "$0") -f \"dir_1 dir_2 dir_3\" -o dest_folder -l logfile.log
+$(basename "$0") -f \"dir_1 dir_2 dir_3\" -o dest_folder -e
+$(basename "$0") -r /path/to/backup/ -o path/to/extract -n name
+$(basename "$0") -g config.txt branch_name -o repo_folder
 
 Config file example :
 path/to/dir_1
@@ -85,21 +85,31 @@ function verification() {
     hostname=$(hostnamectl hostname)
     out=$( ([ $log -eq 1 ] || [ $verbose -eq 0 ]) && echo /dev/null || echo /dev/stdout)
 
-    if [ "$tmp_folders" != "" ]; then
-        for file in $tmp_folders; do
-            if [ -d $file ] || [ -f $file ]; then
-                backup_folders="$backup_folders $file"
+    if [ -n "$tmp_folders" ]; then
+        local nbWord=$(echo "$tmp_folders" | wc -w)
+        if [ $nbWord -eq 1 ]; then
+            if [ -d "$tmp_folders" ] || [ -f "$tmp_folders" ]; then
+                backup_folders="$tmp_folders"
             else
-                echo_err $"Source \"$file\" folder does not exist"
+                echo_err $"Source \"$tmp_folders\" folder does not exist"
+                exit 1
             fi
-        done
+        else
+            for file in $tmp_folders; do
+                if [ -d "$file" ] || [ -f "$file" ]; then
+                    backup_folders+=" $file"
+                else
+                    echo_err $"Source \"$file\" folder does not exist"
+                fi
+            done
+        fi
     else
         echo_err $"Source folder is missing"
         exit 1
     fi
 
-    if [ "$backup_dest" != "" ]; then
-        if [ ! -d $backup_dest ]; then
+    if [ -n "$backup_dest" ]; then
+        if [ ! -d "$backup_dest" ]; then
             echo_err $"Destination \"$backup_dest\" folder does not exist"
             exit 1
         fi
@@ -108,7 +118,7 @@ function verification() {
         exit 1
     fi
 
-    if [ $log -eq 1 ] && [ "$logFile" = "" ]; then
+    if [ $log -eq 1 ] && [ -z "$logFile" ]; then
         log=0
         echo_err $"Log file is missing"
         exit 1
@@ -117,24 +127,31 @@ function verification() {
 
 # readConfig <config>
 function readConfig() {
-    [ "$1" == "" ] && echo_err $"Parameter needed for readConfig" && exit 1
-    while read line; do
-        [ "${line:0:1}" != "#" ] && tmp_folders="$tmp_folders $line"
-    done < $1
+    [ -z "$1" ] && echo_err $"Parameter needed for readConfig" && exit 1
+    [ ! -f "$1" ] && echo_err $"Config file \"$1\" does not exist" && exit 1
+    local nbWord=$(wc -w < "$1")
+
+    if [ $nbWord -eq 1 ]; then
+        tmp_folders="$1"
+    else
+        while read -r line; do
+            [ "${line:0:1}" != "#" ] && tmp_folders+=" $line"
+        done < "$1"
+    fi
 }
 
 function encryptFile() {
-    local name=$([ "$archive_name" != "" ] && echo "${archive_name}.${date}.tar.gz" || echo "backup_${hostname}.${date}.tar.gz")
+    local name=$([ -n "$archive_name" ] && echo "${archive_name}.${date}.tar.gz" || echo "backup_${hostname}.${date}.tar.gz")
 
     echo_out $"Encryption of $backup_dest/$name ..."
-    if ! aescrypt -e $backup_dest/$name &> $out; then
+    if ! aescrypt -e "$backup_dest/$name" &> "$out"; then
         echo_err $"Something wrong with encrytion"
         exit 1
     fi
     echo_out $"Encryption $backup_dest/$name.aes end"
 
     echo_out $"Wiping of $backup_dest/$name ..."
-    if ! shred -zvu $backup_dest/$name &> $out; then
+    if ! shred -zvu "$backup_dest/$name" &> "$out"; then
         echo_err $"Something wrong with wiping"
         exit 1
     fi
@@ -142,11 +159,11 @@ function encryptFile() {
 
 # decryptFile <encryptedFile>
 function decryptFile() {
-    [ "$1" == "" ] && echo_err $"Encrypted file missing" && exit 1
+    [ -z "$1" ] && echo_err $"Encrypted file missing" && exit 1
     local crypted_file=$1
 
     echo_out $"Decryption of $crypted_file.aes ..."
-    if ! aescrypt -d $crypted_file.aes &> $out; then
+    if ! aescrypt -d "$crypted_file.aes" &> "$out"; then
         echo_err $"Something wrong with decryption"
         exit 1
     fi
@@ -154,7 +171,7 @@ function decryptFile() {
 }
 
 function compressFile() {
-    local name=$([ "$archive_name" != "" ] && echo "${archive_name}.${date}.tar.gz" || echo "backup_${hostname}.${date}.tar.gz")
+    local name=$([ -n "$archive_name" ] && echo "${archive_name}.${date}.tar.gz" || echo "backup_${hostname}.${date}.tar.gz")
 
     echo_out $"Compress of :"
     for file in $backup_folders; do
@@ -162,7 +179,7 @@ function compressFile() {
     done
 
     echo_out $"Backup $backup_dest/$name in progress ..."
-    if ! tar czfv $backup_dest/$name $backup_folders &> $out; then
+    if ! tar czfv "$backup_dest/$name" $backup_folders &> "$out"; then
         echo_err $"Something wrong with compression of $backup_dest/$name"
         exit 1
     fi
@@ -173,14 +190,20 @@ function compressFile() {
 # delete <nbToSave>
 # conserve les nbToSave les plus récentes et supprime les autres
 function delete() {
-    [ "$1" == "" ] && echo_err $"Parameter needed for delete" && exit 1
-    local name=$([ "$archive_name" != "" ] && echo "$archive_name" || echo "backup_${hostname}")
-    local nbFile=$(ls $backup_dest | grep -c $name)
+    [ -z "$1" ] && echo_err $"Parameter needed for delete" && exit 1
+    local name=$([ -n "$archive_name" ] && echo "$archive_name" || echo "backup_${hostname}")
+    local nbFile=$(ls "$backup_dest" | grep -c "$name")
     local nbToDel=$(( nbFile - $1 ))
     local extEnc=$([ $encrypt -eq 1 ] && echo ".aes" || echo "")
 
     if [ $nbToDel -gt 0 ]; then
-        local archive_date=$(ls $backup_dest | grep $name | cut -d '.' -f 2 | sort -r | tail -$nbToDel)
+        local archive_date=$(\
+            ls $backup_dest |\
+            grep "$name" |\
+            cut -d '.' -f 2 |\
+            sort -r |\
+            tail -$nbToDel
+        )
 
         echo_out "Deleting $nbToDel old backup : "
 
@@ -193,23 +216,35 @@ function delete() {
 
 # restoreFile
 function restoreFile() {
-    local name=$([ "$archive_name" != "" ] && echo "$archive_name" || echo "backup_${hostname}")
-    local archive_date=$(ls $backup_folders | grep $name | cut -d '.' -f 2 | sort -r | head -1)
-    local archive_ext=$(ls $backup_folders | grep $name | cut -d '.' -f 5 | sort -r | head -1)
-    local full_name="$backup_folders/${name}.${archive_date}.tar.gz"
+    local name=$([ -n "$archive_name" ] && echo "$archive_name" || echo "backup_${hostname}")
+    local archive_date=$(\
+        ls $backup_folders |\
+        grep "$name" |\
+        cut -d '.' -f 2 |\
+        sort -r | \
+        head -1
+    )
+    local archive_ext=$(\
+        ls $backup_folders |\
+        grep "$name" |\
+        cut -d '.' -f 5 |\
+        sort -r |\
+        head -1
+    )
+    local fullName="$backup_folders/${name}.${archive_date}.tar.gz"
 
-    [ "$archive_date" == "" ] && echo_err $"No backup found" && exit 1
-    [ "$archive_ext" == "aes" ] && decryptFile $full_name
+    [ -z "$archive_date" ] && echo_err $"No backup found" && exit 1
+    [ "$archive_ext" == "aes" ] && decryptFile "$fullName"
 
-    echo_out $"Restoration of $full_name to $backup_dest"
-    if ! tar xfz $full_name -C $backup_dest &> $out; then
-        echo_err $"Something wrong with restoration"
+    echo_out $"Restoration of $fullName to $backup_dest"
+    if ! tar xfz $fullName -C "$backup_dest" &> "$out"; then
+        echo_err $"Something wrong with restoration of $fullName to $backup_dest"
         exit 1
     fi
 
     if [ "$archive_ext" == "aes" ]; then
-        echo_out $"Wiping of $full_name ..."
-        if ! shred -zvu $full_name &> $out; then
+        echo_out $"Wiping of $fullName ..."
+        if ! shred -zvu $fullName &> "$out"; then
             echo_err $"Something wrong with wiping"
             exit 1
         fi
@@ -219,21 +254,21 @@ function restoreFile() {
 function gitPushFile() {
     local repo_dir="$backup_dest"
     local init_pos=$(pwd)
-    local file=$(ls -a $repo_dir | grep -vE "\.$|\.\.$|.git")
+    local file=$(ls -a "$repo_dir" | grep -vE "\.$|\.\.$|.git")
 
     echo_out $"Moving file :"
     for file in $backup_folders; do
         echo_out "  -> $file"
     done
 
-    cd $repo_dir
+    cd "$repo_dir"
 
     if ! git checkout $branch; then
         echo_err $"Something wrong git checkout"
         exit 1
     fi
 
-    cd $init_pos
+    cd "$init_pos"
 
     # if ! rsync -r $backup_folders $repo_dir; then
     if ! cp -rf $backup_folders $repo_dir; then
@@ -243,7 +278,7 @@ function gitPushFile() {
 
     echo_out $"File is moved"
 
-    cd $repo_dir
+    cd "$repo_dir"
 
     if ! git add $(ls -a | grep -vE "\.$|\.\.$|.git"); then
         echo_err $"Something wrong with git add"
@@ -255,7 +290,7 @@ function gitPushFile() {
         exit 1
     fi
 
-    if ! git push origin $branch; then
+    if ! git push origin "$branch"; then
         echo_err $"Something wrong with git push"
         exit 1
     fi
@@ -284,7 +319,7 @@ if [ $# -ge 1 ]; then
                 backup_dest=$2
                 shift;;
             -c)
-                readConfig $2
+                readConfig "$2"
                 shift;;
             -l)
                 log=1
@@ -300,7 +335,7 @@ if [ $# -ge 1 ]; then
                 shift;;
             -g)
                 gitmode=1
-                readConfig $2
+                readConfig "$2"
                 branch=$3
                 shift 2;;
             "")
@@ -319,4 +354,4 @@ elif [ $gitmode -eq 1 ]; then gitPushFile
 else compressFile
 fi
 [ $encrypt -eq 1 ] && encryptFile
-[ $nbToSave -gt 0 ] && delete $nbToSave
+[ $nbToSave -gt 0 ] && delete "$nbToSave"
