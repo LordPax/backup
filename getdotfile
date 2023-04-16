@@ -1,6 +1,6 @@
 #!/bin/bash
 
-name=$(basename $0)
+name=$(basename "$0")
 repo="https://raw.githubusercontent.com/LordPax/dotfile"
 branch="$DOTFILE_BRANCH"
 files=""
@@ -11,7 +11,7 @@ version="v0.1.2"
 
 # echoErr <msg>
 function echoErr() {
-    [ "$1" == "" ] && exit 1
+    [ -z "$1" ] && exit 1
     echo -e "\e[31mERROR :\e[0m $1" > /dev/stderr
 }
 
@@ -36,18 +36,18 @@ $name -B -o .config i3/config"
 }
 
 function verification() {
-    [ "$(which bat 2> /dev/null)" == "" ] && echo_err "\"bat\" is required for syntax highligting" && exit 1
-    [ "$branch" == "" ] && echoErr "No branch specified" && exit 1
-    [ "$files" == "" ] && echoErr "No files specified" && exit 1
+    [ -z "$(which bat 2> /dev/null)" ] && echo_err "\"bat\" is required for syntax highligting" && exit 1
+    [ -z "$branch" ] && echoErr "No branch specified" && exit 1
+    [ -z "$files" ] && echoErr "No files specified" && exit 1
 }
 
 # getDotFile <branch> <file>
 function getFile() {
-    ([ "$1" == "" ] || [ "$2" == "" ]) && echoErr "Parameter needed for \"getFile\"" && exit 1
+    ([ -z "$1" ] || [ -z "$2" ]) && echoErr "Parameter needed for \"getFile\"" && exit 1
 
     echo "Downloading \"$2\" from \"$1\" branch ..."
 
-    local out=$([ "$output" == "" ] && echo "$2" || echo "$output/$2")
+    local out=$([ -z "$output" ] && echo "$2" || echo "$output/$2")
     local rename="${out}_old"
 
     if [ $backup -eq 1 ] && [ -f "$out" ]; then
@@ -67,7 +67,7 @@ function getFile() {
 
 # readFile <branch> <file>
 function readFile() {
-    ([ "$1" == "" ] || [ "$2" == "" ]) && echoErr "Parameter needed for \"readFile\"" && exit 1
+    ([ -z "$1" ] || [ -z "$2" ]) && echoErr "Parameter needed for \"readFile\"" && exit 1
 
     if ! wget "$repo/$1/$2" -O - 2> /dev/null; then
         echoErr "Something went wrong while reading \"$2\""
@@ -77,8 +77,8 @@ function readFile() {
 
 # diffFile <branch> <file>
 function diffFile () {
-    ([ "$1" == "" ] || [ "$2" == "" ]) && echoErr "Parameter needed for \"diffFile\"" && exit 1
-    local out=$([ "$output" == "" ] && echo "$2" || echo "$output/$2")
+    ([ -z "$1" ] || [ -z "$2" ]) && echoErr "Parameter needed for \"diffFile\"" && exit 1
+    local out=$([ -z "$output" ] && echo "$2" || echo "$output/$2")
     [ ! -f "$out" ] && echoErr "File \"$out\" doesn't exist" && exit 1
 
     diff -u "$out" <(wget "$repo/$1/$2" -O - 2> /dev/null)
@@ -118,7 +118,7 @@ if [ $# -ge 1 ]; then
                 echoErr $"Unknown parameter \"$1\""
                 exit 1;;
             *)
-                files="$files $1"
+                files+=" $1"
         esac
         shift
     done
