@@ -4,7 +4,7 @@
 
 Juste un petit script de backup
 
-## Pre-requis backup
+## Prérequis backup
 
 * `aescrypt`
 * `shred`
@@ -42,7 +42,7 @@ path/to/dir_1
 path/to/dir_3
 ```
 
-## Pre-requis getdotfile
+## Prérequis getdotfile
 
 * `bat`
 
