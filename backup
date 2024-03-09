@@ -18,6 +18,7 @@ nbToSave=0
 restore=0
 gitmode=0
 branch="master"
+dependencies="aescrypt shred tar curl"
 
 # echo_deb <msg>
 function echo_log() {
@@ -44,6 +45,13 @@ function echo_out() {
     else
         echo -e "$1"
     fi
+}
+
+function checkDependencies() {
+    for dependency in $dependencies; do
+        ! command -v "$dependency" > /dev/null 2>&1 && \
+            echo_err "Dependency \"$dependency\" not found" && exit 1
+    done
 }
 
 function helpFunc() {
@@ -298,60 +306,65 @@ function gitPushFile() {
     echo_out $"Backup succesfully pushed"
 }
 
-if [ $# -ge 1 ]; then
-    for i in $(seq 1 $#); do
-        case $1 in
-            --help | -h)
-                helpFunc;;
-            --verbose | -V)
-                verbose=1;;
-            --version | -v)
-                echo_out $version
-                exit 0;;
-            -f)
-                tmp_folders=$2
-                shift;;
-            -r)
-                restore=1
-                tmp_folders=$2
-                shift;;
-            -o)
-                backup_dest=$2
-                shift;;
-            -c)
-                readConfig "$2"
-                shift;;
-            -l)
-                log=1
-                logFile=$2
-                shift;;
-            -e)
-                encrypt=1;;
-            -n)
-                archive_name=$2
-                shift;;
-            -s)
-                nbToSave=$2
-                shift;;
-            -g)
-                gitmode=1
-                readConfig "$2"
-                branch=$3
-                shift 2;;
-            "")
-                ;;
-            *)
-                echo_err $"Unknown parameter \"$1\""
-                exit 1
-        esac
-        shift
-    done
-fi
+function main() {
+    if [ $# -ge 1 ]; then
+        for _ in $(seq 1 $#); do
+            case $1 in
+                --help | -h)
+                    helpFunc;;
+                --verbose | -V)
+                    verbose=1;;
+                --version | -v)
+                    echo_out $version
+                    exit 0;;
+                -f)
+                    tmp_folders=$2
+                    shift;;
+                -r)
+                    restore=1
+                    tmp_folders=$2
+                    shift;;
+                -o)
+                    backup_dest=$2
+                    shift;;
+                -c)
+                    readConfig "$2"
+                    shift;;
+                -l)
+                    log=1
+                    logFile=$2
+                    shift;;
+                -e)
+                    encrypt=1;;
+                -n)
+                    archive_name=$2
+                    shift;;
+                -s)
+                    nbToSave=$2
+                    shift;;
+                -g)
+                    gitmode=1
+                    readConfig "$2"
+                    branch=$3
+                    shift 2;;
+                "")
+                    ;;
+                *)
+                    echo_err $"Unknown parameter \"$1\""
+                    exit 1
+            esac
+            shift
+        done
+    fi
 
-verification
-if [ $restore -eq 1 ]; then restoreFile
-elif [ $gitmode -eq 1 ]; then gitPushFile
-else compressFile
-fi
-[ $encrypt -eq 1 ] && encryptFile
-[ $nbToSave -gt 0 ] && delete "$nbToSave"
+    verification
+    if [ $restore -eq 1 ]; then restoreFile
+    elif [ $gitmode -eq 1 ]; then gitPushFile
+    else compressFile
+    fi
+    [ $encrypt -eq 1 ] && encryptFile
+    [ $nbToSave -gt 0 ] && delete "$nbToSave"
+}
+
+checkDependencies
+main "$@"
