@@ -8,6 +8,7 @@ backup=0
 mode=0
 output="$HOME"
 version="v0.1.2"
+dependencies="bat wget"
 
 # echoErr <msg>
 function echoErr() {
@@ -36,9 +37,15 @@ $name -B -o .config i3/config"
 }
 
 function verification() {
-    [ -z "$(which bat 2> /dev/null)" ] && echo_err "\"bat\" is required for syntax highligting" && exit 1
     [ -z "$branch" ] && echoErr "No branch specified" && exit 1
     [ -z "$files" ] && echoErr "No files specified" && exit 1
+}
+
+function checkDependencies() {
+    for dependency in $dependencies; do
+        ! command -v "$dependency" > /dev/null 2>&1 && \
+            echo_err "Dependency \"$dependency\" not found" && exit 1
+    done
 }
 
 # getDotFile <branch> <file>
@@ -92,47 +99,52 @@ function diffFile () {
     fi
 }
 
-if [ $# -ge 1 ]; then
-    for i in $(seq 1 $#); do
-        case $1 in
-            -h | --help)
-                helpFunc
-                exit 0;;
-            -v | --version)
-                echo "$version"
-                exit 0;;
-            -b)
-                branch="$2"
-                shift;;
-            -B)
-                backup=1;;
-            -r)
-                mode=1;;
-            -d)
-                mode=2;;
-            -o)
-                output="$2"
-                shift;;
-            "") ;;
-            -*)
-                echoErr $"Unknown parameter \"$1\""
-                exit 1;;
-            *)
-                files+=" $1"
+function main() {
+    if [ $# -ge 1 ]; then
+        for i in $(seq 1 $#); do
+            case $1 in
+                -h | --help)
+                    helpFunc
+                    exit 0;;
+                -v | --version)
+                    echo "$version"
+                    exit 0;;
+                -b)
+                    branch="$2"
+                    shift;;
+                -B)
+                    backup=1;;
+                -r)
+                    mode=1;;
+                -d)
+                    mode=2;;
+                -o)
+                    output="$2"
+                    shift;;
+                "") ;;
+                -*)
+                    echoErr $"Unknown parameter \"$1\""
+                    exit 1;;
+                *)
+                    files+=" $1"
+            esac
+            shift
+        done
+    fi
+
+    verification
+
+    for file in $files; do
+        case $mode in
+            0)
+                getFile "$branch" "$file";;
+            1)
+                readFile "$branch" "$file" | bat -p;;
+            2)
+                diffFile "$branch" "$file" | bat -p;;
         esac
-        shift
     done
-fi
+}
 
-verification
-
-for file in $files; do
-    case $mode in
-        0)
-            getFile "$branch" "$file";;
-        1)
-            readFile "$branch" "$file" | bat -p;;
-        2)
-            diffFile "$branch" "$file" | bat -p;;
-    esac
-done
+checkDependencies
+main "$@"

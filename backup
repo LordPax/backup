@@ -18,7 +18,7 @@ nbToSave=0
 restore=0
 gitmode=0
 branch="master"
-dependencies="aescrypt shred tar curl"
+dependencies="aescrypt shred tar"
 
 # echo_deb <msg>
 function echo_log() {
