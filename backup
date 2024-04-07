@@ -5,13 +5,14 @@
 
 export TEXTDOMAIN="backup"
 
+name=$(basename "$0")
 encrypt=0
 tmp_folders=""
 backup_folders=""
 backup_dest="."
 log=0
 logFile=""
-version="v3.3.5"
+version="v3.3.6"
 archive_name=""
 verbose=0
 nbToSave=0
@@ -22,9 +23,9 @@ dependencies="aescrypt shred tar"
 
 # echo_deb <msg>
 function echo_log() {
-    ([ -z "$1" ] || [ -z "$logFile" ]) && exit 1
+    [ -z "$1" ] || [ -z "$logFile" ] && exit 1
     local date=$(date "+%Y-%m-%d %H:%M:%S")
-    echo -e "$date : $1" >> "$logFile"
+    echo -e "[$date] $1" >> "$logFile"
 }
 
 # echo_err <msg>
@@ -55,7 +56,7 @@ function checkDependencies() {
 }
 
 function helpFunc() {
-    echo_out $"Usage : $(basename "$0") [option]
+    echo_out $"Usage : $name [option]
 
 Option :
 -h or --help              Show help
@@ -72,12 +73,12 @@ Option :
 -s <nbToSave>             Save nbToSave backup and delete other
 
 Example :
-$(basename "$0") -f \"dir_1 dir_2 dir_3\" -o dest_folder
-$(basename "$0") -c config.txt -o dest_folder
-$(basename "$0") -f \"dir_1 dir_2 dir_3\" -o dest_folder -l logfile.log
-$(basename "$0") -f \"dir_1 dir_2 dir_3\" -o dest_folder -e
-$(basename "$0") -r /path/to/backup/ -o path/to/extract -n name
-$(basename "$0") -g config.txt branch_name -o repo_folder
+$name -f \"dir_1 dir_2 dir_3\" -o dest_folder
+$name -c config.txt -o dest_folder
+$name -f \"dir_1 dir_2 dir_3\" -o dest_folder -l logfile.log
+$name -f \"dir_1 dir_2 dir_3\" -o dest_folder -e
+$name -r /path/to/backup/ -o path/to/extract -n name
+$name -g config.txt branch_name -o repo_folder
 
 Config file example :
 path/to/dir_1
@@ -149,7 +150,10 @@ function readConfig() {
 }
 
 function encryptFile() {
-    local name=$([ -n "$archive_name" ] && echo "${archive_name}.${date}.tar.gz" || echo "backup_${hostname}.${date}.tar.gz")
+    local name=$([ -n "$archive_name" ] &&
+        echo "${archive_name}.${date}.tar.gz" ||
+        echo "backup_${hostname}.${date}.tar.gz"
+    )
 
     echo_out $"Encryption of $backup_dest/$name ..."
     if ! aescrypt -e "$backup_dest/$name" &> "$out"; then
@@ -179,7 +183,10 @@ function decryptFile() {
 }
 
 function compressFile() {
-    local name=$([ -n "$archive_name" ] && echo "${archive_name}.${date}.tar.gz" || echo "backup_${hostname}.${date}.tar.gz")
+    local name=$([ -n "$archive_name" ] &&
+        echo "${archive_name}.${date}.tar.gz" ||
+        echo "backup_${hostname}.${date}.tar.gz"
+    )
 
     echo_out $"Compress of :"
     for file in $backup_folders; do
@@ -199,17 +206,20 @@ function compressFile() {
 # conserve les nbToSave les plus récentes et supprime les autres
 function delete() {
     [ -z "$1" ] && echo_err $"Parameter needed for delete" && exit 1
-    local name=$([ -n "$archive_name" ] && echo "$archive_name" || echo "backup_${hostname}")
+    local name=$([ -n "$archive_name" ] &&
+        echo "$archive_name" ||
+        echo "backup_${hostname}"
+    )
     local nbFile=$(ls "$backup_dest" | grep -c "$name")
     local nbToDel=$(( nbFile - $1 ))
     local extEnc=$([ $encrypt -eq 1 ] && echo ".aes" || echo "")
 
     if [ $nbToDel -gt 0 ]; then
-        local archive_date=$(\
-            ls $backup_dest |\
-            grep "$name" |\
-            cut -d '.' -f 2 |\
-            sort -r |\
+        local archive_date=$(
+            ls $backup_dest |
+            grep "$name" |
+            cut -d '.' -f 2 |
+            sort -r |
             tail -$nbToDel
         )
 
@@ -224,19 +234,22 @@ function delete() {
 
 # restoreFile
 function restoreFile() {
-    local name=$([ -n "$archive_name" ] && echo "$archive_name" || echo "backup_${hostname}")
-    local archive_date=$(\
-        ls $backup_folders |\
-        grep "$name" |\
-        cut -d '.' -f 2 |\
-        sort -r | \
+    local name=$([ -n "$archive_name" ] &&
+        echo "$archive_name" ||
+        echo "backup_${hostname}"
+    )
+    local archive_date=$(
+        ls $backup_folders |
+        grep "$name" |
+        cut -d '.' -f 2 |
+        sort -r |
         head -1
     )
-    local archive_ext=$(\
-        ls $backup_folders |\
-        grep "$name" |\
-        cut -d '.' -f 5 |\
-        sort -r |\
+    local archive_ext=$(
+        ls $backup_folders |
+        grep "$name" |
+        cut -d '.' -f 5 |
+        sort -r |
         head -1
     )
     local fullName="$backup_folders/${name}.${archive_date}.tar.gz"
@@ -269,14 +282,14 @@ function gitPushFile() {
         echo_out "  -> $file"
     done
 
-    cd "$repo_dir"
+    cd "$repo_dir" || exit 1
 
     if ! git checkout $branch; then
         echo_err $"Something wrong git checkout"
         exit 1
     fi
 
-    cd "$init_pos"
+    cd "$init_pos" || exit 1
 
     # if ! rsync -r $backup_folders $repo_dir; then
     if ! cp -rf $backup_folders $repo_dir; then
@@ -286,7 +299,7 @@ function gitPushFile() {
 
     echo_out $"File is moved"
 
-    cd "$repo_dir"
+    cd "$repo_dir" || exit 1
 
     if ! git add $(ls -a | grep -vE "\.$|\.\.$|.git"); then
         echo_err $"Something wrong with git add"
